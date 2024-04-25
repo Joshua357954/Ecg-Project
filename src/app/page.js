@@ -1,171 +1,216 @@
-// 'use client'
-// import { Suspense,useRef, useEffect } from 'react';
-// import { Canvas } from '@react-three/fiber'
-// import { Environment, OrbitControls, useGLTF } from '@react-three/drei'
-// import * as THREE from 'three';
-// import { Model } from  '../Human.jsx'
+'use client'
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Canvas, useLoader, useThree } from '@react-three/fiber';
+import { Environment, OrbitControls, useGLTF } from '@react-three/drei';
+import { Model2 } from '../Human.jsx'
+import * as THREE from 'three';
 
-// const customColors = {
-//   eyelash: 0x000000, // Black for eyelashes
-//   generic: 0xe0c9a2, // Light brown for generic skin
-//   pupil: 0x000000,   // Black for pupils
-//   humanEyes: 0x0077ff, // Blue for human eyes
-//   cornea: 0xffffff,  // White for cornea (sclera)
-//   irisV3: 0x99ccff,  // Light blue for iris
-//   skin3: 0xe0c9a2,   // Light brown for skin
-//   tongue: 0xffcccc,  // Light pink for tongue
-//   humanTeeth: 0xffffff, // White for human teeth
-//   nails: 0xffffff     // White for nails
+
+
+// const texturePaths = {
+//   // 'eyelash': 'path_to_your_eyelash_texture',
+//   // 'generic': '/texture.jpg',
+//   // 'pupil': 'path_to_your_pupil_texture',
+//   // 'humanEyes': '/eyetexture.jpg',
+//   // 'cornea': 'path_to_your_cornea_texture',
+//   // 'irisV3': 'path_to_your_iris_v3_texture',
+//   'skin3': '/texture.jpg',
+//   // 'tongue': 'path_to_your_tongue_texture',
+//   // 'humanTeeth': 'path_to_your_human_teeth_texture',
+//   // 'nails': 'path_to_your_nails_texture'
 // };
 
-// export default function MyPage() {
 
-  // return <div className='h-screen w-screen'>
-  //   <div className="relative w-full h-screen flex justify-center items-center">
-  //       <h1 className="absolute top-6 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 text-3xl">Welcome to the ECG Webapp</h1>
-  //       <div className="absolute top-0 left-0 w-full h-full">
-  //         <Canvas className="w-full h-full">
-  //           <Suspense fallback={null}>
-  //             <ambientLight />
-  //             <spotLight  />
-  //             <Model position={[0, -2, 0]} customColors={customColors} />
-  //             <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
-  //             <Environment preset='sunset'/>
-  //           </Suspense>
-  //         </Canvas>
-  //       </div>
-  //     </div>
 
-//   </div>
-// }
 
-'use client'
-import React, { Suspense, useEffect, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { Environment, OrbitControls, useGLTF } from '@react-three/drei';
-import * as THREE from 'three';
-import { useDrag, DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 
 function Model({ scale }) {
+  // Define your texture paths
+  const texturePaths = {
+      'skin3': '/texture1.jpg',
+      'irisV3': '/iristexture.jpg',
+      // 'humanEyes': '/eyetexture.jpg',
+  };
+
+  // Load your GLTF model
   const gltf = useGLTF('/human.glb');
-  
-  // Texture loading
-  const texture = useLoader(THREE.TextureLoader, '/texture.jpg');
-  gltf.scene.traverse((child) => {
-    if (child.isMesh) {
-      const material = child.material;
-      material.map = texture;
-      material.roughness = 0.5; // Set roughness
-      material.metalness = 0.5; // Set metalness
-      // You can adjust other material properties as needed
-    }
+
+  // Load your texture images asynchronously using useLoader
+  const textures = {};
+  for (const part in texturePaths) {
+      textures[part] = useLoader(THREE.TextureLoader, texturePaths[part]);
+  }
+
+  console.log(textures)
+
+  // Once the model is loaded, traverse it to apply textures
+  gltf.scene.traverse(function (child) {
+      if (texturePaths[child.name] && textures[child.name]) {
+          child.material.map = textures[child.name];
+          child.material.needsUpdate = true; // Ensure material update
+      }
   });
-  
-  // Centering the model
-  const boundingBox = new THREE.Box3().setFromObject(gltf.scene);
-  const size = boundingBox.getSize(new THREE.Vector3());
-  const center = boundingBox.getCenter(new THREE.Vector3());
-  gltf.scene.position.set(-center.x, -center.y + size.y / 2, -center.z);
-  
+
   return <primitive object={gltf.scene} scale={scale} position={[0, -2, 0]} />;
 }
 
+function MouseInteractions() {
+  const { camera, scene } = useThree();
+  const raycaster = new THREE.Raycaster();
+  const mouse = useRef(new THREE.Vector2());
 
-function ColorSwatch({ color, onDrop }) {
-  const [{ isDragging }, drag] = useDrag({
-    item: { type: 'color-swatch', color }, // Ensure type is defined here
-    end: (item, monitor) => {
-      const dropResult = monitor.getDropResult();
-      if (dropResult) {
-        onDrop(dropResult.position);
-      }
-    },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
+  const onMouseMove = (event) => {
+    const { clientX, clientY } = event;
+    mouse.current.x = (clientX / window.innerWidth) * 2 - 1;
+    mouse.current.y = -(clientY / window.innerHeight) * 2 + 1;
 
-  return (
-    <div
-      ref={drag}
-      style={{
-        width: '50px',
-        height: '50px',
-        backgroundColor: color,
-        opacity: isDragging ? 0.5 : 1,
-        cursor: 'move',
-      }}
-    ></div>
-  );
-}
+    raycaster.setFromCamera(mouse.current, camera);
+    const intersects = raycaster.intersectObjects(scene.children, true);
 
-
-export default function MyPage() {
-  const [selectedObject, setSelectedObject] = useState(null);
-
-  const handleMouseDown = (event) => {
-    // Logic to select object
-    event.preventDefault();
-    setSelectedObject(event.object);
-  }
-
-  const handleMouseMove = (event) => {
-    // Update position of selected object
-    if (selectedObject) {
-      // Update position of selected object
-      raycaster.setFromCamera(mouse, camera);
-      var intersects = raycaster.intersectObjects([groundPlane]); // Assuming 'groundPlane' is a plane representing the floor
-      if (intersects.length > 0) {
-        selectedObject.position.copy(intersects[0].point);
-      }
+    if (intersects.length > 0) {
+      console.log(intersects);
     }
-  }
-
-  const handleMouseUp = (event) => {
-    setSelectedObject(null);
-  }
+  };
 
   useEffect(() => {
-    document.addEventListener('mousedown', handleMouseDown, false);
-    document.addEventListener('mousemove', handleMouseMove, false);
-    document.addEventListener('mouseup', handleMouseUp, false);
+    window.addEventListener('mousemove', onMouseMove);
     return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', onMouseMove);
     };
-  }, [handleMouseDown, handleMouseMove, handleMouseUp]);
+  }, []);
 
-  const handleSwatchDrop = (color, position) => {
-    // Handle drop logic here
-    // You can place the color swatch at the position on the model
-    console.log(`Dropped color ${color} at position ${position}`);
+  return null;
+}
+
+export default function MyPage() {
+  const [dragging, setDragging] = useState(false);
+  const [droppedItems, setDroppedItems] = useState({'red':false,'blue':false,'green':false});
+
+  const handleDrag = useCallback((e, color) => {
+    setDragging(true);
+    // Pass the id of the dragged item along with the drag event
+    e.dataTransfer.setData('ECG', color);
+    }, []);
+
+  const handleDragOver = (e,color) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e,color) => {
+    e.preventDefault();
+
+    const draggedColor = e.dataTransfer.getData('ECG');
+    if (draggedColor.toLowerCase() == color.toLowerCase()){
+      console.log(draggedColor,color)
+      console.log("Good to GO 🚀")
+    }
+    else {
+      console.log('Dragged :',draggedColor,'Checker :',color)
+      console.log("Wrong location 🧐")
+    }
+
+    setDroppedItems(prevState => ({
+      ...prevState,
+      [draggedColor]: true // or whatever value you want to set
+    }));
+    // Reset dragging state
+    setDragging(false);
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
     <div className='h-screen w-screen'>
       <div className="relative w-full h-screen flex justify-center items-center">
         <h1 className="absolute top-6 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 text-xl font-bold bg-blue-300 px-4 py-1 rounded-md">Welcome to the ECG Test Simulator</h1>
-        <div className="absolute top-0 left-0 w-full h-full">
-          <Canvas className="w-full h-full bg-gray-700">
+        <div className=" w-[50%] h-full mx-auto relative">
+          <Canvas className="w-full h-full bg-gray-200">
             <Suspense fallback={null}>
               <ambientLight />
-              <spotLight  />
-              <Model scale={[2, 2, 2]} />
-              <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+              <Model2 scale={[2,2,2]} position={[0, -2, 0]}/>
+              <OrbitControls enableRotate={false} enablePan={true} enableZoom={true} />
               <Environment preset='sunset'/>
             </Suspense>
+            <MouseInteractions/>
           </Canvas>
-          <div className="absolute top-0 left-0 flex space-x-4 p-4">
-            <ColorSwatch color="red" onDrop={(position) => handleSwatchDrop("red", position)} />
-            <ColorSwatch color="green" onDrop={(position) => handleSwatchDrop("green", position)} />
-            <ColorSwatch color="blue" onDrop={(position) => handleSwatchDrop("blue", position)} />
+          
+          <div className='flex gap-x-2 absolute top-44 left-48'>
+            <div 
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'red': false }))} 
+              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['red'] && 'bg-red-600'}  text-white mb-2`} 
+              onDragOver={(e) => handleDragOver(e, 'red')} 
+              onDrop={(e) => handleDrop(e, 'red')}
+            >
+              {/* {dragging ? 'DR' : 'DP!'} */}
+            </div>
+
+            <div 
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'blue': false }))} 
+              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['blue'] && 'bg-blue-600'}  text-white mb-2`} 
+              onDragOver={(e) => handleDragOver(e, 'blue')} 
+              onDrop={(e) => handleDrop(e, 'blue')}
+            >
+              {/* {dragging ? 'DR' : 'DP!'} */}
+            </div>
+
+            <div 
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'green': false }))} 
+              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['green'] && 'bg-green-600'}  text-white mb-2`} 
+              onDragOver={(e) => handleDragOver(e, 'green')} 
+              onDrop={(e) => handleDrop(e, 'green')}
+            >
+              {/* {dragging ? 'DR' : 'DP!'} */}
+            </div>
           </div>
+        </div>
+
+
+
+
+        {/* Color Swatches */}
+        <div className='absolute top-0 right-0 bg-blue-100 w-[25%] h-screen'>
+          {/* Draggable */}
+          <div draggable onDragStart={(e) => handleDrag(e,'red')} className='bg-red-200 w-fit p-2 rounded-md'>Red </div>
+          <div draggable onDragStart={(e) => handleDrag(e,'blue')} className='bg-blue-200 w-fit p-2 rounded-md'>Blue </div>
+          <div draggable onDragStart={(e) => handleDrag(e,'green')} className='bg-green-200 w-fit p-2 rounded-md'>Green </div>
+          <div draggable onDragStart={(e) => handleDrag(e,'indigo')} className='bg-indigo-200 w-fit p-2 rounded-md'>Indigo </div>
+          <div draggable onDragStart={(e) => handleDrag(e,'yellow')} className='bg-yellow-200 w-fit p-2 rounded-md'>Yellow </div>
+          <div draggable onDragStart={(e) => handleDrag(e,'purple')} className='bg-purple-200 w-fit p-2 rounded-md'>Purple </div>
+        
+        
+        </div>
+
+        <div className='absolute top-0 left-0 bg-green-100 w-[25%] h-screen '>
+          {/* Dropable */}
+          {/* <div className='flex gap-x-2'>
+            <div 
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'red': false }))} 
+              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['red'] && 'bg-red-600'}  text-white mb-2`} 
+              onDragOver={(e) => handleDragOver(e, 'red')} 
+              onDrop={(e) => handleDrop(e, 'red')}
+            >
+              {dragging ? 'DR' : 'DP!'}
+            </div>
+
+            <div 
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'blue': false }))} 
+              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['blue'] && 'bg-blue-600'}  text-white mb-2`} 
+              onDragOver={(e) => handleDragOver(e, 'blue')} 
+              onDrop={(e) => handleDrop(e, 'blue')}
+            >
+              {dragging ? 'DR' : 'DP!'}
+            </div>
+
+            <div 
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'green': false }))} 
+              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['green'] && 'bg-green-600'}  text-white mb-2`} 
+              onDragOver={(e) => handleDragOver(e, 'green')} 
+              onDrop={(e) => handleDrop(e, 'green')}
+            >
+              {dragging ? 'DR' : 'DP!'}
+            </div>
+          </div> */}
+
         </div>
       </div>
     </div>
-    </DndProvider>
   );
 }
