@@ -2,159 +2,83 @@
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas, useLoader, useThree } from '@react-three/fiber';
 import { Environment, OrbitControls, useGLTF } from '@react-three/drei';
-import { Model2 } from '../Human.jsx'
+import { Model } from '../Human2.jsx'
 import * as THREE from 'three';
-
-
-
-// const texturePaths = {
-//   // 'eyelash': 'path_to_your_eyelash_texture',
-//   // 'generic': '/texture.jpg',
-//   // 'pupil': 'path_to_your_pupil_texture',
-//   // 'humanEyes': '/eyetexture.jpg',
-//   // 'cornea': 'path_to_your_cornea_texture',
-//   // 'irisV3': 'path_to_your_iris_v3_texture',
-//   'skin3': '/texture.jpg',
-//   // 'tongue': 'path_to_your_tongue_texture',
-//   // 'humanTeeth': 'path_to_your_human_teeth_texture',
-//   // 'nails': 'path_to_your_nails_texture'
-// };
-
-
-
-
-
-function Model({ scale }) {
-  // Define your texture paths
-  const texturePaths = {
-      'skin3': '/texture1.jpg',
-      'irisV3': '/iristexture.jpg',
-      // 'humanEyes': '/eyetexture.jpg',
-  };
-
-  // Load your GLTF model
-  const gltf = useGLTF('/human.glb');
-
-  // Load your texture images asynchronously using useLoader
-  const textures = {};
-  for (const part in texturePaths) {
-      textures[part] = useLoader(THREE.TextureLoader, texturePaths[part]);
-  }
-
-  console.log(textures)
-
-  // Once the model is loaded, traverse it to apply textures
-  gltf.scene.traverse(function (child) {
-      if (texturePaths[child.name] && textures[child.name]) {
-          child.material.map = textures[child.name];
-          child.material.needsUpdate = true; // Ensure material update
-      }
-  });
-
-  return <primitive object={gltf.scene} scale={scale} position={[0, -2, 0]} />;
-}
-
-function MouseInteractions() {
-  const { camera, scene } = useThree();
-  const raycaster = new THREE.Raycaster();
-  const mouse = useRef(new THREE.Vector2());
-
-  const onMouseMove = (event) => {
-    const { clientX, clientY } = event;
-    mouse.current.x = (clientX / window.innerWidth) * 2 - 1;
-    mouse.current.y = -(clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse.current, camera);
-    const intersects = raycaster.intersectObjects(scene.children, true);
-
-    if (intersects.length > 0) {
-      console.log(intersects);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener('mousemove', onMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-    };
-  }, []);
-
-  return null;
-}
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function MyPage() {
-  const [dragging, setDragging] = useState(false);
-  const [droppedItems, setDroppedItems] = useState({'red':false,'blue':false,'green':false});
+  const [modelRotationY, setModelRotationY] = useState(0);
+  const [droppedItems, setDroppedItems] = useState({ 'red': false, 'blue': false, 'green': false });
+  const [leftClicks, setLeftClicks] = useState(0);
+  const [rightClicks, setRightClicks] = useState(0);
 
-  const handleDrag = useCallback((e, color) => {
-    setDragging(true);
-    // Pass the id of the dragged item along with the drag event
+  const handleDrag = (e, color) => {
     e.dataTransfer.setData('ECG', color);
-    }, []);
+  }
 
-  const handleDragOver = (e,color) => {
+  const handleDragOver = (e) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e,color) => {
+  const handleDrop = (e, color) => {
     e.preventDefault();
 
     const draggedColor = e.dataTransfer.getData('ECG');
-    if (draggedColor.toLowerCase() == color.toLowerCase()){
-      console.log(draggedColor,color)
-      console.log("Good to GO 🚀")
+    if (draggedColor.toLowerCase() === color.toLowerCase()) {
+      setDroppedItems(prevState => ({ ...prevState, [draggedColor]: true }));
+      toast(`Dropped ${color} in the right location! 🚀`);
+    } else {
+      toast.error(`Dropped ${draggedColor} in the wrong location! 🧐`);
     }
-    else {
-      console.log('Dragged :',draggedColor,'Checker :',color)
-      console.log("Wrong location 🧐")
-    }
+  };
 
-    setDroppedItems(prevState => ({
-      ...prevState,
-      [draggedColor]: true // or whatever value you want to set
-    }));
-    // Reset dragging state
-    setDragging(false);
+  const rotateLeft = () => {
+    setLeftClicks(prev => prev + 1);
+    setModelRotationY(prev => prev - 0.1);
+  };
+
+  const rotateRight = () => {
+    setRightClicks(prev => prev + 1);
+    setModelRotationY(prev => prev + 0.1);
   };
 
   return (
     <div className='h-screen w-screen'>
+      <Toaster />
       <div className="relative w-full h-screen flex justify-center items-center">
-        <h1 className="absolute top-6 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 text-xl font-bold bg-blue-300 px-4 py-1 rounded-md">Welcome to the ECG Test Simulator</h1>
         <div className=" w-[50%] h-full mx-auto relative">
           <Canvas className="w-full h-full bg-gray-200">
             <Suspense fallback={null}>
               <ambientLight />
-              <Model2 scale={[2,2,2]} position={[0, -2, 0]}/>
+              <Model scale={[3, 3, 3]} position={[0, -3, 0]} rotation={[0, modelRotationY, 0]} />
               <OrbitControls enableRotate={false} enablePan={true} enableZoom={true} />
-              <Environment preset='sunset'/>
+              <Environment preset='sunset' />
             </Suspense>
-            <MouseInteractions/>
           </Canvas>
-          
+
           <div className='flex gap-x-2 absolute top-44 left-48'>
-            <div 
-              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'red': false }))} 
-              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['red'] && 'bg-red-600'}  text-white mb-2`} 
-              onDragOver={(e) => handleDragOver(e, 'red')} 
+            <div
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'red': false }))}
+              className={`text-xs rounded-full w-fit p-2 bg-blackk border-dashed border-black border-[1px] ${droppedItems['red'] && 'bg-red-600'}  text-white mb-2`}
+              onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'red')}
             >
               {/* {dragging ? 'DR' : 'DP!'} */}
             </div>
 
-            <div 
-              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'blue': false }))} 
-              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['blue'] && 'bg-blue-600'}  text-white mb-2`} 
-              onDragOver={(e) => handleDragOver(e, 'blue')} 
+            <div
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'blue': false }))}
+              className={`text-xs rounded-full w-fit p-2 bg-blackk border-dashed border-black border-[1px] ${droppedItems['blue'] && 'bg-blue-600'}  text-white mb-2`}
+              onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'blue')}
             >
               {/* {dragging ? 'DR' : 'DP!'} */}
             </div>
 
-            <div 
-              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'green': false }))} 
-              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['green'] && 'bg-green-600'}  text-white mb-2`} 
-              onDragOver={(e) => handleDragOver(e, 'green')} 
+            <div
+              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'green': false }))}
+              className={`text-xs rounded-full w-fit p-2 bg-blackk border-dashed border-black border-[1px] ${droppedItems['green'] && 'bg-green-600'}  text-white mb-2`}
+              onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'green')}
             >
               {/* {dragging ? 'DR' : 'DP!'} */}
@@ -162,53 +86,29 @@ export default function MyPage() {
           </div>
         </div>
 
+        {/* Draggable */}
+        <div className='absolute top-0 right-0 bg-white w-[25%] h-screen'>
+          <div className='pt-5 w-full flex flex-col items-center gap-7'>
+            <p className='font-semibold bg-gray-200 px-2 rounded-lg py-1 text-xl'> Pick an Electrode</p>
 
-
-
-        {/* Color Swatches */}
-        <div className='absolute top-0 right-0 bg-blue-100 w-[25%] h-screen'>
-          {/* Draggable */}
-          <div draggable onDragStart={(e) => handleDrag(e,'red')} className='bg-red-200 w-fit p-2 rounded-md'>Red </div>
-          <div draggable onDragStart={(e) => handleDrag(e,'blue')} className='bg-blue-200 w-fit p-2 rounded-md'>Blue </div>
-          <div draggable onDragStart={(e) => handleDrag(e,'green')} className='bg-green-200 w-fit p-2 rounded-md'>Green </div>
-          <div draggable onDragStart={(e) => handleDrag(e,'indigo')} className='bg-indigo-200 w-fit p-2 rounded-md'>Indigo </div>
-          <div draggable onDragStart={(e) => handleDrag(e,'yellow')} className='bg-yellow-200 w-fit p-2 rounded-md'>Yellow </div>
-          <div draggable onDragStart={(e) => handleDrag(e,'purple')} className='bg-purple-200 w-fit p-2 rounded-md'>Purple </div>
-        
-        
+            <div draggable onDragStart={(e) => handleDrag(e, 'red')} className='bg-red-400 w-fit p-4 rounded-md'></div>
+            <div draggable onDragStart={(e) => handleDrag(e, 'blue')} className='bg-blue-400 w-fit p-4 rounded-md'></div>
+            <div draggable onDragStart={(e) => handleDrag(e, 'green')} className='bg-green-400 w-fit p-4 rounded-md'></div>
+            <div draggable onDragStart={(e) => handleDrag(e, 'indigo')} className='bg-indigo-400 w-fit p-4 rounded-md'> </div>
+            <div draggable onDragStart={(e) => handleDrag(e, 'yellow')} className='bg-yellow-400 w-fit p-4 rounded-md'></div>
+            <div draggable onDragStart={(e) => handleDrag(e, 'purple')} className='bg-purple-400 w-fit p-4 rounded-md'> </div>
+          </div>
         </div>
 
-        <div className='absolute top-0 left-0 bg-green-100 w-[25%] h-screen '>
-          {/* Dropable */}
-          {/* <div className='flex gap-x-2'>
-            <div 
-              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'red': false }))} 
-              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['red'] && 'bg-red-600'}  text-white mb-2`} 
-              onDragOver={(e) => handleDragOver(e, 'red')} 
-              onDrop={(e) => handleDrop(e, 'red')}
-            >
-              {dragging ? 'DR' : 'DP!'}
-            </div>
-
-            <div 
-              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'blue': false }))} 
-              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['blue'] && 'bg-blue-600'}  text-white mb-2`} 
-              onDragOver={(e) => handleDragOver(e, 'blue')} 
-              onDrop={(e) => handleDrop(e, 'blue')}
-            >
-              {dragging ? 'DR' : 'DP!'}
-            </div>
-
-            <div 
-              onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'green': false }))} 
-              className={`text-xs rounded-full w-fit p-1 bg-blackk border-dashed border-black border-[1px] ${droppedItems['green'] && 'bg-green-600'}  text-white mb-2`} 
-              onDragOver={(e) => handleDragOver(e, 'green')} 
-              onDrop={(e) => handleDrop(e, 'green')}
-            >
-              {dragging ? 'DR' : 'DP!'}
-            </div>
-          </div> */}
-
+        <div className='absolute top-0 left-0 flex flex-col items-center bg-white w-[25%] h-screen '>
+          <div className='mt-4 flex flex-col items-center'>
+            <h1 className='text-center text-3xl mb-1 font-semibold'>ECG TEST</h1>
+            <span className='px-2 text-sm py-1 font-medium rounded-lg bg-gray-200 text-center'>Simulator</span>
+          </div>
+          <div className="flex flex-col items-center mt-10">
+            <button onClick={rotateLeft} className="bg-blue-500 text-white px-4 py-2 rounded-md mb-2">Rotate Left</button>
+            <button onClick={rotateRight} className="bg-blue-500 text-white px-4 py-2 rounded-md">Rotate Right</button>
+          </div>
         </div>
       </div>
     </div>

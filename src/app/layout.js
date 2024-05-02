@@ -15,3 +15,81 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
+  
+
+// const texturePaths = {
+//   // 'eyelash': 'path_to_your_eyelash_texture',
+//   // 'generic': '/texture.jpg',
+//   // 'pupil': 'path_to_your_pupil_texture',
+//   // 'humanEyes': '/eyetexture.jpg',
+//   // 'cornea': 'path_to_your_cornea_texture',
+//   // 'irisV3': 'path_to_your_iris_v3_texture',
+//   'skin3': '/texture.jpg',
+//   // 'tongue': 'path_to_your_tongue_texture',
+//   // 'humanTeeth': 'path_to_your_human_teeth_texture',
+//   // 'nails': 'path_to_your_nails_texture'
+// };
+
+
+
+
+
+// function Models({ scale }) {
+//   // Define your texture paths
+//   const texturePaths = {
+//       'skin3': '/texture1.jpg',
+//       'irisV3': '/iristexture.jpg',
+//       // 'humanEyes': '/eyetexture.jpg',
+//   };
+
+//   // Load your GLTF model
+//   const gltf = useGLTF('/human2.gltf');
+
+//   // Load your texture images asynchronously using useLoader
+//   const textures = {};
+//   for (const part in texturePaths) {
+//       textures[part] = useLoader(THREE.TextureLoader, texturePaths[part]);
+//   }
+
+//   console.log(textures)
+
+//   // Once the model is loaded, traverse it to apply textures
+//   gltf.scene.traverse(function (child) {
+//       if (texturePaths[child.name] && textures[child.name]) {
+//           child.material.map = textures[child.name];
+//           child.material.needsUpdate = true; // Ensure material update
+//       }
+//   });
+
+//   return <primitive object={gltf.scene} scale={scale} position={[0, -2, 0]} />;
+// }
+
+// function MouseInteractions() {
+//   const { camera, scene } = useThree();
+//   const raycaster = new THREE.Raycaster();
+//   const mouse = useRef(new THREE.Vector2());
+
+//   const onMouseMove = (event) => {
+//     const { clientX, clientY } = event;
+//     mouse.current.x = (clientX / window.innerWidth) * 2 - 1;
+//     mouse.current.y = -(clientY / window.innerHeight) * 2 + 1;
+
+//     raycaster.setFromCamera(mouse.current, camera);
+//     const intersects = raycaster.intersectObjects(scene.children, true);
+
+//     if (intersects.length > 0) {
+//       console.log(intersects);
+//     }
+//   };
+
+//   useEffect(() => {
+//     window.addEventListener('mousemove', onMouseMove);
+//     return () => {
+//       window.removeEventListener('mousemove', onMouseMove);
+//     };
+//   }, []);
+
+//   return null;
+// }
+

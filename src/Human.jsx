@@ -45,4 +45,4 @@ export function Model2(props) {
   )
 }
 
-useGLTF.preload('/human.glb')
+useGLTF.preload('/human2.gltf')
