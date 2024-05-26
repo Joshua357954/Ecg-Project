@@ -93,3 +93,364 @@ export default function RootLayout({ children }) {
 //   return null;
 // }
 
+
+// import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+// import { Canvas, useLoader, useThree } from '@react-three/fiber';
+// import { Environment, OrbitControls, useGLTF } from '@react-three/drei';
+// import { Model } from '../Human2.jsx'
+// import * as THREE from 'three';
+// import { Toaster, toast } from 'react-hot-toast';
+
+// export default function MyPage() {
+//   const [modelRotationY, setModelRotationY] = useState(0);
+//   const [droppedItems, setDroppedItems] = useState({ 'red': false, 'blue': false, 'green': false });
+//   const [leftClicks, setLeftClicks] = useState(0);
+//   const [rightClicks, setRightClicks] = useState(0);
+
+//   const handleDrag = (e, color) => {
+//     e.dataTransfer.setData('ECG', color);
+//   }
+
+//   const handleDragOver = (e) => {
+//     e.preventDefault();
+//   };
+
+//   const handleDrop = (e, color) => {
+//     e.preventDefault();
+
+//     const draggedColor = e.dataTransfer.getData('ECG');
+//     if (draggedColor.toLowerCase() === color.toLowerCase()) {
+//       setDroppedItems(prevState => ({ ...prevState, [draggedColor]: true }));
+//       toast(`Dropped ${color} in the right location! 🚀`);
+//     } else {
+//       toast.error(`Dropped ${draggedColor} in the wrong location! 🧐`);
+//     }
+//   };
+
+//   const rotateLeft = () => {
+//     setLeftClicks(prev => prev + 1);
+//     setModelRotationY(prev => prev - 0.1);
+//   };
+
+//   const rotateRight = () => {
+//     setRightClicks(prev => prev + 1);
+//     setModelRotationY(prev => prev + 0.1);
+//   };
+
+//   return (
+//     <div className='h-screen w-screen'>
+//       <Toaster />
+//       <div className="relative w-full h-screen flex justify-center items-center">
+//         <div className=" w-[50%] h-full mx-auto relative">
+//           <Canvas className="w-full h-full bg-gray-200">
+//             <Suspense fallback={null}>
+//               <ambientLight />
+//               <Model scale={[3, 3, 3]} position={[0, -3, 0]} rotation={[0, modelRotationY, 0]} />
+//               <OrbitControls enableRotate={false} enablePan={true} enableZoom={true} />
+//               <Environment preset='sunset' />
+//             </Suspense>
+//           </Canvas>
+
+//           <div className='flex bg-yellow-200 h-28 gap-x-2 absolute top-40 left-[50%]'>
+//             <div
+//               onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'red': false }))}
+//               className={`text-xs rounded-full w-fit h-fit p-2 bg-blackk border-dashed border-black border-[1px] ${droppedItems['red'] && 'bg-red-600'}  text-white mb-2`}
+//               onDragOver={handleDragOver}
+//               onDrop={(e) => handleDrop(e, 'red')}
+//             >
+//               {/* {dragging ? 'DR' : 'DP!'} */}
+//             </div>
+
+//             <div
+//               onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'blue': false }))}
+//               className={`text-xs rounded-full w-fit p-2 bg-blackk border-dashed border-black h-fit border-[1px] ${droppedItems['blue'] && 'bg-blue-600'}  text-white mb-2`}
+//               onDragOver={handleDragOver}
+//               onDrop={(e) => handleDrop(e, 'blue')}
+//             >
+//               {/* {dragging ? 'DR' : 'DP!'} */}
+//             </div>
+
+//             <div
+//               onDoubleClick={() => setDroppedItems(prevState => ({ ...prevState, 'green': false }))}
+//               className={`text-xs rounded-full w-fit p-2 bg-blackk border-dashed border-black h-fit border-[1px] ${droppedItems['green'] && 'bg-green-600'}  text-white mb-2`}
+//               onDragOver={handleDragOver}
+//               onDrop={(e) => handleDrop(e, 'green')}
+//             >
+//               {/* {dragging ? 'DR' : 'DP!'} */}
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Draggable */}
+//         <div className='absolute top-0 right-0 bg-white w-[25%] h-screen'>
+//           <div className='pt-5 w-full flex flex-col items-center gap-7'>
+//             <p className='font-semibold bg-gray-200 px-2 rounded-lg py-1 text-xl'> Pick an Electrode</p>
+
+//             <div draggable onDragStart={(e) => handleDrag(e, 'red')} className='bg-red-400 w-fit p-4 rounded-md'></div>
+//             <div draggable onDragStart={(e) => handleDrag(e, 'blue')} className='bg-blue-400 w-fit p-4 rounded-md'></div>
+//             <div draggable onDragStart={(e) => handleDrag(e, 'green')} className='bg-green-400 w-fit p-4 rounded-md'></div>
+//             <div draggable onDragStart={(e) => handleDrag(e, 'indigo')} className='bg-indigo-400 w-fit p-4 rounded-md'> </div>
+//             <div draggable onDragStart={(e) => handleDrag(e, 'yellow')} className='bg-yellow-400 w-fit p-4 rounded-md'></div>
+//             <div draggable onDragStart={(e) => handleDrag(e, 'purple')} className='bg-purple-400 w-fit p-4 rounded-md'> </div>
+//           </div>
+//         </div>
+
+//         <div className='absolute top-0 left-0 flex flex-col items-center bg-white w-[25%] h-screen '>
+//           <div className='mt-4 flex flex-col items-center'>
+//             <h1 className='text-center text-3xl mb-1 font-semibold'>ECG TEST</h1>
+//             <span className='px-2 text-sm py-1 font-medium rounded-lg bg-gray-200 text-center'>Simulator</span>
+//           </div>
+//           <div className="flex flex-col items-center mt-10">
+//             <button onClick={rotateLeft} className="bg-blue-500 text-white px-4 py-2 rounded-md mb-2">Rotate Left</button>
+//             <button onClick={rotateRight} className="bg-blue-500 text-white px-4 py-2 rounded-md">Rotate Right</button>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+// import React, { Suspense, useState } from 'react';
+// import { useDrag, useDrop, DndProvider } from 'react-dnd';
+// import { HTML5Backend } from 'react-dnd-html5-backend';
+// import { Canvas, useLoader } from '@react-three/fiber';
+// import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+// import toast, { Toaster } from 'react-hot-toast';
+// import { extend } from '@react-three/fiber'
+// import { OrbitControls, TransformControls } from 'three-stdlib'
+// extend({ OrbitControls, TransformControls })
+
+// // Draggable item component
+// const DraggableItem = ({ id, color }) => {
+//   const [{ isDragging }, drag] = useDrag({
+//     type: 'item',
+//     item: { id, color },
+//     collect: (monitor) => ({
+//       isDragging: monitor.isDragging(),
+//     }),
+//   });
+
+//   return (
+//     <div
+//       ref={drag}
+//       className={`w-12 h-12 rounded-full cursor-move ${color}`}
+//       style={{ opacity: isDragging ? 0.5 : 1 }}
+//     />
+//   );
+// };
+
+// // Model viewer with drop target
+// const ModelViewerWithDropTarget = () => {
+//   const [droppedItems, setDroppedItems] = useState([]);
+
+//   // Hardcoded drop positions with colors
+//   const dropPositions = [
+//     { x: 100, y: 100, color: "bg-red-500" },
+//     { x: 200, y: 200, color: "bg-blue-500" },
+//     { x: 300, y: 300, color: "bg-green-500" },
+//   ];
+
+//   // Handle drop event
+//   const handleDrop = (item, position) => {
+//     const droppedItem = { id: item.id, position };
+//     setDroppedItems([...droppedItems, droppedItem]);
+//     checkDropValidity(droppedItem);
+//   };
+
+//   // Check drop validity
+//   const checkDropValidity = (droppedItem) => {
+//     const { position } = droppedItem;
+//     const dropPosition = dropPositions.find(
+//       (pos) => pos.x === position.x && pos.y === position.y
+//     );
+//     const message = dropPosition.color === droppedItem.id ?
+//       'Correct color dropped in the right position!' :
+//       'Wrong color dropped in this position!';
+//     toast(message, { position: 'bottom-center' });
+//   };
+
+//   // Prevent default drag over behavior
+//   const handleDragOver = (event) => {
+//     event.preventDefault();
+//   };
+
+//   // Hook for drop target
+//   const [{ isOver }, drop] = useDrop({
+//     accept: 'item',
+//     drop: (item, monitor) => {
+//       const dropPosition = monitor.getClientOffset();
+//       console.log("Drop POS :", dropPosition)
+//       handleDrop(item, dropPosition);
+//     },
+//     collect: (monitor) => ({
+//       isOver: monitor.isOver(),
+//     }),
+//   });
+
+//   // Render
+//   return (
+//     <div
+//       ref={drop}
+//       onDragOver={handleDragOver}
+//       className={`relative w-full h-full bg-gray-200 ${isOver ? 'border-4 border-dashed border-blue-500' : ''}`}
+//     >
+//       <Toaster position="bottom-center" />
+//       {/* Render drop positions */}
+//       {dropPositions.map((position, index) => (
+//         <div
+//           key={index}
+//           className={`absolute rounded-full w-12 h-12 ${position.color} top-${position.y - 6} left-${position.x - 6}`}
+//         />
+//       ))}
+//       {/* Render 3D model */}
+
+//       <Canvas>
+//         <Suspense fallback={null}>
+//           <orbitControls position={[1,1,1]}/>
+//           <transformControls />
+//           <Model />
+//         </Suspense>
+//         {/* Render dropped items */}
+//         {droppedItems.map((item, index) => (
+//           <div
+//             key={index}
+//             style={{
+//               position: 'absolute',
+//               left: item.position.x,
+//               top: item.position.y,
+//               width: '20px', // Adjust the size as needed
+//               height: '20px', // Adjust the size as needed
+//               backgroundColor: item.id, // Use the item id as the background color
+//               borderRadius: '50%', // Make it a circle shape
+//             }}
+//   />
+// ))}
+
+//       </Canvas>
+//     </div>
+//   );
+// };
+
+// // 3D Model component
+// const Model = () => {
+//   const gltf = useLoader(GLTFLoader, '/human.glb');
+//   return <primitive object={gltf.scene} />;
+// };
+
+// // App component
+// const App = () => {
+//   return (
+//     <DndProvider backend={HTML5Backend}>
+//       <div className="p-4">
+//         <h1 className="text-2xl font-bold mb-4">Drag and Drop Colored Divs</h1>
+//         <div className="w-96 h-72 relative">
+//           <ModelViewerWithDropTarget />
+//           <div className="flex justify-between mt-4">
+//             <DraggableItem id="bg-red-500" color="bg-red-500" />
+//             <DraggableItem id="bg-blue-500" color="bg-blue-500" />
+//             <DraggableItem id="bg-green-500" color="bg-green-500" />
+//             {/* Add more draggable items as needed */}
+//           </div>
+//         </div>
+//       </div>
+//     </DndProvider>
+//   );
+// };
+
+// export default App;
+
+// import React, { useRef, useEffect } from "react";
+// import * as THREE from "three";
+// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+
+// const ModelWithOverlay = () => {
+//   const sceneRef = useRef();
+//   const overlayRef = useRef();
+
+//   useEffect(() => {
+//     let scene, camera, renderer, model, overlay;
+
+//     // Initialize Three.js scene
+//     scene = new THREE.Scene();
+
+//     // Add camera
+//     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+//     camera.position.z = 5;
+
+//     // Add renderer
+//     renderer = new THREE.WebGLRenderer({ antialias: true });
+//     renderer.setSize(window.innerWidth / 2, window.innerHeight);
+//     sceneRef.current.appendChild(renderer.domElement);
+
+//     // Load 3D model
+//     const loader = new GLTFLoader();
+//     loader.load(
+//       "/human.glb",
+//       (gltf) => {
+//         model = gltf.scene;
+//         scene.add(model); // Add the model to the Three.js scene
+
+//         // Position the overlay element relative to the model
+//         overlay = overlayRef.current;
+//         overlay.style.position = "absolute";
+//         overlay.style.top = "50%";
+//         overlay.style.left = "50%";
+//         overlay.style.transform = "translate(-50%, -50%)";
+
+//         // Animation loop
+//         const animate = () => {
+//           requestAnimationFrame(animate);
+
+//           // Update overlay position based on model's position and scale
+//           const modelPosition = model.position.clone().project(camera);
+//           const overlayX = (modelPosition.x * window.innerWidth) / 2 + window.innerWidth / 2;
+//           const overlayY = -(modelPosition.y * window.innerHeight) / 2 + window.innerHeight / 2;
+
+//           overlay.style.left = `${overlayX}px`;
+//           overlay.style.top = `${overlayY}px`;
+
+//           renderer.render(scene, camera);
+//         };
+//         animate();
+//       },
+//       undefined,
+//       (error) => {
+//         console.error(error);
+//       }
+//     );
+
+//     // Clean up
+//     return () => {
+//       scene = null;
+//       camera = null;
+//       renderer = null;
+//       model = null;
+//       overlay = null;
+//     };
+//   }, []);
+
+//   return (
+//     <div className="flex w-screen h-screen">
+//       {/* Left colored section */}
+//       <div className="w-1/4 bg-blue-500"></div>
+
+//       {/* Three.js scene container */}
+//       <div ref={sceneRef} className="w-1/2 h-full relative">
+//         {/* Your overlay element */}
+//         <div ref={overlayRef} className="absolute">
+//           {/* Three circle divs */}
+//           <div className="w-8 h-8 rounded-full bg-red-500 mx-2"></div>
+//           <div className="w-8 h-8 rounded-full bg-green-500 mx-2"></div>
+//           <div className="w-8 h-8 rounded-full bg-blue-500 mx-2"></div>
+//         </div>
+//       </div>
+
+//       {/* Right colored section */}
+//       <div className="w-1/4 bg-green-500"></div>
+//     </div>
+//   );
+// };
+
+// export default ModelWithOverlay;
+
+
