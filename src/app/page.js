@@ -1,168 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Canvas, extend } from "@react-three/fiber";
-import { Environment, Html, useGLTF } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
 import { Toaster, toast } from "react-hot-toast";
 import * as THREE from "three";
+import { Swatch } from "./components/electron";
+import { initialColors, initialPositions } from "./utils";
+import { Model } from "./components/model";
 
-extend({ Html });
-
-const Marker = ({ position, onDrop }) => {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragOver = (event) => {
-    event.preventDefault();
-  };
-
-  const handleDragEnter = () => {
-    setIsDragging(true);
-  };   
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    const droppedColor = event.dataTransfer.getData("color");
-    onDrop(position.id, droppedColor);
-    setIsDragging(false);
-  };
-
-  const markerStyle = {
-    border: position.usersPick ? "2px dotted black" : "none",
-    width: "1.3rem",
-    height: "1.3rem",
-    borderRadius: "50%",
-    cursor: "default",
-    position: "relative",
-    backgroundColor: position.droppedColor || "transparent",
-    opacity: isDragging ? 0.5 : 0.6,
-  };
-
-  return (
-    <mesh position={position.coords}>
-      <Html className="relative">
-        <div
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          style={markerStyle}
-        />
-      </Html>
-    </mesh>
-  );
-};
-
-const Swatch = ({ color, isDisabled }) => {
-  const handleDragStart = (event) => {
-    event.dataTransfer.setData("color", color);
-  };
-
-  return (
-    <div
-      className={`w-4 h-4 rounded-full m-2 ${isDisabled ? "opacity-50" : ""}`}
-      draggable={!isDisabled}
-      onDragStart={handleDragStart}
-      style={{
-        backgroundColor: color,
-        pointerEvents: isDisabled ? "none" : "auto",
-      }}
-    ></div>
-  );
-};
-
-const Model = ({ src, rotate, positions, onDrop }) => {
-  const { scene } = useGLTF(src);
-
-  return (
-    <>
-      {scene && (
-        <primitive
-          object={scene}
-          scale={[3, 3, 3]}
-          position={[0, -3, 0]}
-          rotation-y={rotate}
-        />
-      )}
-      {positions.map((position) => (
-        <Marker key={position.id} position={position} onDrop={onDrop} />
-      ))}
-    </>
-  );
-};
 
 const ThreeScene = () => {
-  const initialColors = [
-    { color: "red", isDisabled: false },
-    { color: "blue", isDisabled: false },
-    { color: "green", isDisabled: false },
-    { color: "yellow", isDisabled: false },
-    { color: "orange", isDisabled: false },
-    { color: "purple", isDisabled: false },
-    { color: "cyan", isDisabled: false },
-    { color: "magenta", isDisabled: false },
-  ];
-
-  const initialPositions = [
-    {
-      id: 1,
-      coords: [-0.45, 1.79, 0.44],
-      defaultColor: "red",
-      droppedColor: null,
-      usersPick: false,
-    },
-    {
-      id: 2,
-      coords: [-0.1, 2.01, 0.49],
-      defaultColor: "blue",
-      droppedColor: null,
-      usersPick: false,
-    },
-    {
-      id: 3,
-      coords: [0.33, 1.92, 0.5],
-      defaultColor: "green",
-      droppedColor: null,
-      usersPick: false,
-    },
-    {
-      id: 4,
-      coords: [0.33, 1.49, 0.34],
-      defaultColor: "yellow",
-      droppedColor: null,
-      usersPick: false,
-    },
-    {
-      id: 5,
-      coords: [0.11, 1.24, 0.46],
-      defaultColor: "orange",
-      droppedColor: null,
-      usersPick: false,
-    },
-    {
-      id: 6,
-      coords: [0.0, 1.45, 0.51],
-      defaultColor: "purple",
-      droppedColor: null,
-      usersPick: false,
-    },
-    {
-      id: 7,
-      coords: [-0.2, 1.01, 0.48],
-      defaultColor: "cyan",
-      droppedColor: null,
-      usersPick: false,
-    },
-    {
-      id: 8,
-      coords: [-0.43, 1.03, 0.34],
-      defaultColor: "magenta",
-      droppedColor: null,
-      usersPick: false,
-    },
-  ];
 
   const [rotate, setRotate] = useState(0);
   const [colors, setColors] = useState(initialColors);
@@ -298,11 +145,10 @@ const ThreeScene = () => {
               {positions.map((position, index) => (
                 <div key={index} className="flex gap-3 items-center">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      position.droppedColor === position.defaultColor
-                        ? "bg-green-500"
-                        : "bg-red-400"
-                    }`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${position.droppedColor === position.defaultColor
+                      ? "bg-green-500"
+                      : "bg-red-400"
+                      }`}
                   >
                     <span className="text-white text-sm">
                       {position.droppedColor === position.defaultColor
