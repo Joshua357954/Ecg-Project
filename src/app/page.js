@@ -98,7 +98,7 @@ const ThreeScene = () => {
 
         <div className="absolute top-0 right-0 bg-white w-[25%] h-screen">
           <div className="pt-5 w-full flex flex-col items-center gap-5">
-            <p className="font-semibold bg-gray-200 px-2 rounded-lg py-1 text-xl">
+            <p className="font-semibold text-center bg-gray-200 px-2 rounded-lg py-1 text-xl">
               Pick an Electrode
             </p>
             {colors.map((colorObj, index) => (
